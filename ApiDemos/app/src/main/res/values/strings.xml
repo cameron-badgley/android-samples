@@ -18,6 +18,7 @@
     <string name="legal_info">Legal Info</string>
     <string name="no_demos">No demos</string>
     <string name="play_services_not_installed">Google Play services is not installed on this device.</string>
+    <string name="search">Search</string>
 
     <string name="alpha">Alpha</string>
     <string name="animate">Animate</string>
@@ -85,11 +86,11 @@
     <string name="move_the_camera">Move the camera</string>
     <string name="multi_map_demo_label">Multiple Maps</string>
     <string name="multi_map_demo_description">Demonstrates how to show multiple maps in a single activity.</string>
-    <string name="my_location">My Location</string>
-    <string name="my_location_demo_label">My Location Demo</string>
+    <string name="my_location">YardFind</string>
+    <string name="my_location_demo_label">YardFind Demo</string>
     <string name="my_location_demo_description">Demonstrates how to use GMS Location.</string>
-    <string name="mylocation_button">My Location Button</string>
-    <string name="mylocation_layer">My Location Layer</string>
+    <string name="mylocation_button">YardFind Button</string>
+    <string name="mylocation_layer">YardFind Layer</string>
     <string name="none_map">None</string>
     <string name="normal">Normal</string>
     <string name="options_demo_label">Options</string>
