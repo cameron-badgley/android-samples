@@ -135,6 +135,8 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
     private Marker mMelbourne;
 
+    private Marker mTagMarker;
+
     /**
      * Keeps track of the last selected marker (though it may no longer be selected).  This is
      * useful for refreshing the info window.
@@ -152,6 +154,8 @@ public class MyLocationDemoActivity extends AppCompatActivity
     private RadioGroup mOptions;
 
     private final Random mRandom = new Random();
+
+    private int padding = 0;
 
     /**
      * Flag indicating whether a requested permission has been denied after returning in
@@ -177,6 +181,11 @@ public class MyLocationDemoActivity extends AppCompatActivity
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = getResources().getDisplayMetrics().heightPixels;
+        int minMetric = Math.min(width, height);
+        padding = (int) (minMetric * 0.40);
 
         new OnMapAndViewReadyListener(mapFragment, this);
     }
@@ -216,7 +225,7 @@ public class MyLocationDemoActivity extends AppCompatActivity
         LatLngBounds bounds = new LatLngBounds.Builder()
                 .include(new LatLng(location.getLatitude(), location.getLongitude()))
                 .build();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
 
         // Set listeners for marker events.  See the bottom of this class for their behavior.
         mMap.setOnMarkerClickListener(this);
@@ -468,10 +477,30 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
     @Override
     public boolean onMyLocationButtonClick() {
-        Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+
+
+        LocationManager lm = (LocationManager)getSystemService(LOCATION_SERVICE);
+        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        if(mTagMarker != null){
+            LatLngBounds bounds = new LatLngBounds.Builder()
+                    .include(new LatLng(mTagMarker.getPosition().latitude, mTagMarker.getPosition().longitude))
+                    .include(new LatLng(location.getLatitude(), location.getLongitude()))
+                    .build();
+
+            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
+        }else{
+            LatLngBounds bounds = new LatLngBounds.Builder()
+                    .include(new LatLng(location.getLatitude(), location.getLongitude()))
+                    .build();
+
+            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
+        }
+
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
-        return false;
+        return true;
     }
 
 
@@ -596,25 +625,27 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
                                     if (jsonTag.has("Latitude")) {
                                         //"Latitude":"32.226530","Longitude":"-82.419036"
-                                        onClearMap(null);
 
                                         String tagName = jsonTag.getString("Id");
                                         if(jsonTag.has("Name") && (jsonTag.getString("Name").length() > 0) && (!jsonTag.getString("Name").equals("null"))){
                                             tagName = jsonTag.getString("Name");
                                         }
-                                        mMap.addMarker(new MarkerOptions()
+
+                                        mTagMarker = mMap.addMarker(new MarkerOptions()
                                                 .position(new LatLng(jsonTag.getDouble("Latitude"), jsonTag.getDouble("Longitude")))
                                                 .title(tagName)
-                                                .snippet("(" + jsonTag.getDouble("Latitude") + "," + jsonTag.getDouble("Longitude") + ")")
+                                                .snippet("(" + jsonTag.getDouble("Latitude") + ", " + jsonTag.getDouble("Longitude") + ")")
                                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
+                                        mTagMarker.showInfoWindow();
                                         LocationManager lm = (LocationManager)getSystemService(LOCATION_SERVICE);
                                         Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                                         LatLngBounds bounds = new LatLngBounds.Builder()
-                                                .include(new LatLng(jsonTag.getDouble("Latitude"), jsonTag.getDouble("Longitude")))
+                                                .include(new LatLng(mTagMarker.getPosition().latitude, mTagMarker.getPosition().longitude))
                                                 .include(new LatLng(location.getLatitude(), location.getLongitude()))
                                                 .build();
-                                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+
+                                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
                                     }
                                 }
                             }
