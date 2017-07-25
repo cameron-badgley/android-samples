@@ -125,83 +125,6 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
     private static final LatLng ALICE_SPRINGS = new LatLng(-24.6980, 133.8807);
 
-    /** Demonstrates customizing the info window and/or its contents. */
-    class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
-
-        // These are both viewgroups containing an ImageView with id "badge" and two TextViews with id
-        // "title" and "snippet".
-        private final View mWindow;
-
-        private final View mContents;
-
-        CustomInfoWindowAdapter() {
-            mWindow = getLayoutInflater().inflate(R.layout.custom_info_window, null);
-            mContents = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
-        }
-
-        @Override
-        public View getInfoWindow(Marker marker) {
-            if (mOptions.getCheckedRadioButtonId() != R.id.custom_info_window) {
-                // This means that getInfoContents will be called.
-                return null;
-            }
-            render(marker, mWindow);
-            return mWindow;
-        }
-
-        @Override
-        public View getInfoContents(Marker marker) {
-            if (mOptions.getCheckedRadioButtonId() != R.id.custom_info_contents) {
-                // This means that the default info contents will be used.
-                return null;
-            }
-            render(marker, mContents);
-            return mContents;
-        }
-
-        private void render(Marker marker, View view) {
-            int badge;
-            // Use the equals() method on a Marker to check for equals.  Do not use ==.
-            if (marker.equals(mBrisbane)) {
-                badge = R.drawable.badge_qld;
-            } else if (marker.equals(mAdelaide)) {
-                badge = R.drawable.badge_sa;
-            } else if (marker.equals(mSydney)) {
-                badge = R.drawable.badge_nsw;
-            } else if (marker.equals(mMelbourne)) {
-                badge = R.drawable.badge_victoria;
-            } else if (marker.equals(mPerth)) {
-                badge = R.drawable.badge_wa;
-            } else {
-                // Passing 0 to setImageResource will clear the image view.
-                badge = 0;
-            }
-            ((ImageView) view.findViewById(R.id.badge)).setImageResource(badge);
-
-            String title = marker.getTitle();
-            TextView titleUi = ((TextView) view.findViewById(R.id.title));
-            if (title != null) {
-                // Spannable string allows us to edit the formatting of the text.
-                SpannableString titleText = new SpannableString(title);
-                titleText.setSpan(new ForegroundColorSpan(Color.RED), 0, titleText.length(), 0);
-                titleUi.setText(titleText);
-            } else {
-                titleUi.setText("");
-            }
-
-            String snippet = marker.getSnippet();
-            TextView snippetUi = ((TextView) view.findViewById(R.id.snippet));
-            if (snippet != null && snippet.length() > 12) {
-                SpannableString snippetText = new SpannableString(snippet);
-                snippetText.setSpan(new ForegroundColorSpan(Color.MAGENTA), 0, 10, 0);
-                snippetText.setSpan(new ForegroundColorSpan(Color.BLUE), 12, snippet.length(), 0);
-                snippetUi.setText(snippetText);
-            } else {
-                snippetUi.setText("");
-            }
-        }
-    }
-
     private Marker mPerth;
 
     private Marker mSydney;
@@ -251,17 +174,6 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
         mFlatBox = (CheckBox) findViewById(R.id.flat);
 
-        mOptions = (RadioGroup) findViewById(R.id.custom_info_window_options);
-        mOptions.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (mLastSelectedMarker != null && mLastSelectedMarker.isInfoWindowShown()) {
-                    // Refresh the info window when the info window's content has changed.
-                    mLastSelectedMarker.showInfoWindow();
-                }
-            }
-        });
-
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -306,10 +218,6 @@ public class MyLocationDemoActivity extends AppCompatActivity
                 .build();
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
 
-        // Setting an info window adapter allows us to change the both the contents and look of the
-        // info window.
-        mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
-
         // Set listeners for marker events.  See the bottom of this class for their behavior.
         mMap.setOnMarkerClickListener(this);
         mMap.setOnInfoWindowClickListener(this);
@@ -321,6 +229,7 @@ public class MyLocationDemoActivity extends AppCompatActivity
         // Ideally this string would be localised.
         mMap.setContentDescription("YardFind map.");
 
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         /*
         LatLngBounds bounds = new LatLngBounds.Builder()
                 .include(PERTH)
@@ -705,7 +614,7 @@ public class MyLocationDemoActivity extends AppCompatActivity
                                                 .include(new LatLng(jsonTag.getDouble("Latitude"), jsonTag.getDouble("Longitude")))
                                                 .include(new LatLng(location.getLatitude(), location.getLongitude()))
                                                 .build();
-                                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+                                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
                                     }
                                 }
                             }

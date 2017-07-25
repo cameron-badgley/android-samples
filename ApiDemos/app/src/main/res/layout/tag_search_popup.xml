@@ -12,7 +12,7 @@
         android:id="@+id/etTagName"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="Tag Name:"
+        android:hint="Tag Name or ID:"
         android:inputType="textNoSuggestions"
         android:textSize="18dp" />
 
