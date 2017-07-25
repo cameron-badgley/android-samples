@@ -16,6 +16,12 @@
 
 package com.example.mapdemo;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
@@ -50,19 +56,23 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.Console;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -85,6 +95,10 @@ public class MyLocationDemoActivity extends AppCompatActivity
         GoogleMap.OnInfoWindowLongClickListener,
         GoogleMap.OnInfoWindowCloseListener,
         OnMapAndViewReadyListener.OnGlobalLayoutAndMapReadyListener {
+
+    private EditText _etTagNameSearch;
+    //private ProgressBar _largeProgressBar;
+    private AlertDialog alertDialog;
 
     /**
      * Request code for location permission request.
@@ -574,6 +588,7 @@ public class MyLocationDemoActivity extends AppCompatActivity
     }
 
     private void showSearch(){
+        /*
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
         alert.setTitle("Title");
@@ -597,7 +612,69 @@ public class MyLocationDemoActivity extends AppCompatActivity
         });
 
         alert.show();
+        */
 
+        //AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.DialogTheme);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Find Tag");
+
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.tag_search_popup, null);
+        builder.setView(view);
+
+        _etTagNameSearch = (EditText) view.findViewById(R.id.etTagName);
+
+        // Set up the buttons
+        builder.setPositiveButton("Search", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String tagName = _etTagNameSearch.getText().toString();
+                //_httpHelper.findTag(tagName);
+                search(tagName);
+                //_largeProgressBar.setVisibility(View.VISIBLE);
+                _hideSoftKeyboard();
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+                _hideSoftKeyboard();
+            }
+        });
+
+        alertDialog = builder.create();
+        alertDialog.show();
     }
 
+    private void search(String searchString){
+        // Instantiate the RequestQueue.
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url ="http://vypinapi.azurewebsites.net/api/tag?TagRequest=" + searchString;
+        //http://vypinapi.azurewebsites.net/api/tag?TagRequest=d05fb82f3c13
+
+        // Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(
+                Request.Method.GET,
+                url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // Display the first 500 characters of the response string.
+                        //mTextView.setText("Response is: "+ response.substring(0,500));
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        //mTextView.setText("That didn't work!");
+                    }
+                }
+        );
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
+    }
+
+    private void _hideSoftKeyboard(){
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
 }
