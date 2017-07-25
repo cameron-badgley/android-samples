@@ -43,6 +43,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -72,8 +74,12 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.Console;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -292,7 +298,13 @@ public class MyLocationDemoActivity extends AppCompatActivity
         mMap.getUiSettings().setZoomControlsEnabled(false);
 
         // Add lots of markers to the map.
-        addMarkersToMap();
+        //addMarkersToMap();
+        LocationManager lm = (LocationManager)getSystemService(LOCATION_SERVICE);
+        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        LatLngBounds bounds = new LatLngBounds.Builder()
+                .include(new LatLng(location.getLatitude(), location.getLongitude()))
+                .build();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
 
         // Setting an info window adapter allows us to change the both the contents and look of the
         // info window.
@@ -307,8 +319,9 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
         // Override the default content description on the view, for accessibility mode.
         // Ideally this string would be localised.
-        mMap.setContentDescription("Map with lots of markers.");
+        mMap.setContentDescription("YardFind map.");
 
+        /*
         LatLngBounds bounds = new LatLngBounds.Builder()
                 .include(PERTH)
                 .include(SYDNEY)
@@ -317,6 +330,7 @@ public class MyLocationDemoActivity extends AppCompatActivity
                 .include(MELBOURNE)
                 .build();
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+        */
     }
 
     private void addMarkersToMap() {
@@ -662,6 +676,42 @@ public class MyLocationDemoActivity extends AppCompatActivity
                     public void onResponse(String response) {
                         // Display the first 500 characters of the response string.
                         //mTextView.setText("Response is: "+ response.substring(0,500));
+
+                        try {
+                            JSONObject jsonResponse = new JSONObject(response);
+                            if (jsonResponse.has("TagResults")) {
+                                JSONArray jsonTagResults = jsonResponse.getJSONArray("TagResults");
+
+                                if(jsonTagResults.length() > 0){
+                                    JSONObject jsonTag = jsonTagResults.getJSONObject(0);
+
+                                    if (jsonTag.has("Latitude")) {
+                                        //"Latitude":"32.226530","Longitude":"-82.419036"
+                                        onClearMap(null);
+
+                                        String tagName = jsonTag.getString("Id");
+                                        if(jsonTag.has("Name") && (jsonTag.getString("Name").length() > 0) && (!jsonTag.getString("Name").equals("null"))){
+                                            tagName = jsonTag.getString("Name");
+                                        }
+                                        mMap.addMarker(new MarkerOptions()
+                                                .position(new LatLng(jsonTag.getDouble("Latitude"), jsonTag.getDouble("Longitude")))
+                                                .title(tagName)
+                                                .snippet("(" + jsonTag.getDouble("Latitude") + "," + jsonTag.getDouble("Longitude") + ")")
+                                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+
+                                        LocationManager lm = (LocationManager)getSystemService(LOCATION_SERVICE);
+                                        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                                        LatLngBounds bounds = new LatLngBounds.Builder()
+                                                .include(new LatLng(jsonTag.getDouble("Latitude"), jsonTag.getDouble("Longitude")))
+                                                .include(new LatLng(location.getLatitude(), location.getLongitude()))
+                                                .build();
+                                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+                                    }
+                                }
+                            }
+                        }catch (Exception e){
+
+                        }
                     }
                 }, new Response.ErrorListener() {
                     @Override
