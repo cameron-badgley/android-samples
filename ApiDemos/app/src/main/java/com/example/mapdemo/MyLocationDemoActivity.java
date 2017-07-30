@@ -157,6 +157,8 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
     private int padding = 0;
 
+    private int paddingSmall = 0;
+
     /**
      * Flag indicating whether a requested permission has been denied after returning in
      * {@link #onRequestPermissionsResult(int, String[], int[])}.
@@ -186,6 +188,7 @@ public class MyLocationDemoActivity extends AppCompatActivity
         int height = getResources().getDisplayMetrics().heightPixels;
         int minMetric = Math.min(width, height);
         padding = (int) (minMetric * 0.40);
+        paddingSmall = (int) (minMetric * 0.10);
 
         new OnMapAndViewReadyListener(mapFragment, this);
     }
@@ -220,13 +223,8 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
         // Add lots of markers to the map.
         //addMarkersToMap();
-        LocationManager lm = (LocationManager)getSystemService(LOCATION_SERVICE);
-        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        LatLngBounds bounds = new LatLngBounds.Builder()
-                .include(new LatLng(location.getLatitude(), location.getLongitude()))
-                .build();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
 
+        refreshLocation();
         // Set listeners for marker events.  See the bottom of this class for their behavior.
         mMap.setOnMarkerClickListener(this);
         mMap.setOnInfoWindowClickListener(this);
@@ -475,29 +473,55 @@ public class MyLocationDemoActivity extends AppCompatActivity
         }
     }
 
+    private void refreshLocation(){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Permission to access the location is missing.
+            return;
+        } else if (mMap != null) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Permission to access the location is missing.
+                return;
+                //PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
+                //        Manifest.permission.ACCESS_FINE_LOCATION, true);
+            } else if (mMap != null) {
+                /*
+                LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+                Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                */
+                //Location location = null;
+                Location location = mMap.getMyLocation();
+
+                if (mTagMarker != null && location != null) {
+                    LatLngBounds bounds = new LatLngBounds.Builder()
+                            .include(new LatLng(mTagMarker.getPosition().latitude, mTagMarker.getPosition().longitude))
+                            .include(new LatLng(location.getLatitude(), location.getLongitude()))
+                            .build();
+
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
+                } else if(mTagMarker != null) {
+                    LatLngBounds bounds = new LatLngBounds.Builder()
+                            .include(new LatLng(mTagMarker.getPosition().latitude, mTagMarker.getPosition().longitude))
+                            .build();
+
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
+
+                } else if(location != null) {
+                    LatLngBounds bounds = new LatLngBounds.Builder()
+                            .include(new LatLng(location.getLatitude(), location.getLongitude()))
+                            .build();
+
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
+                }
+            }
+        }
+    }
+
     @Override
     public boolean onMyLocationButtonClick() {
         //Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
-
-
-        LocationManager lm = (LocationManager)getSystemService(LOCATION_SERVICE);
-        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-        if(mTagMarker != null){
-            LatLngBounds bounds = new LatLngBounds.Builder()
-                    .include(new LatLng(mTagMarker.getPosition().latitude, mTagMarker.getPosition().longitude))
-                    .include(new LatLng(location.getLatitude(), location.getLongitude()))
-                    .build();
-
-            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
-        }else{
-            LatLngBounds bounds = new LatLngBounds.Builder()
-                    .include(new LatLng(location.getLatitude(), location.getLongitude()))
-                    .build();
-
-            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
-        }
-
+        refreshLocation();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
         return true;
@@ -515,6 +539,7 @@ public class MyLocationDemoActivity extends AppCompatActivity
                 Manifest.permission.ACCESS_FINE_LOCATION)) {
             // Enable the my location layer if the permission has been granted.
             enableMyLocation();
+            refreshLocation();
         } else {
             // Display the missing permission error dialog when the fragments resume.
             mPermissionDenied = true;
@@ -524,11 +549,11 @@ public class MyLocationDemoActivity extends AppCompatActivity
     @Override
     protected void onResumeFragments() {
         super.onResumeFragments();
-        if (mPermissionDenied) {
+        /*if (mPermissionDenied) {
             // Permission was not granted, display error dialog.
             showMissingPermissionError();
             mPermissionDenied = false;
-        }
+        }*/
     }
 
     /**
@@ -638,6 +663,8 @@ public class MyLocationDemoActivity extends AppCompatActivity
                                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
                                         mTagMarker.showInfoWindow();
+
+                                        /*
                                         LocationManager lm = (LocationManager)getSystemService(LOCATION_SERVICE);
                                         Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                                         LatLngBounds bounds = new LatLngBounds.Builder()
@@ -646,6 +673,8 @@ public class MyLocationDemoActivity extends AppCompatActivity
                                                 .build();
 
                                         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
+                                        */
+                                        refreshLocation();
                                     }
                                 }
                             }
